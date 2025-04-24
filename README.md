@@ -35,7 +35,7 @@ alembic upgrade head
 
 5. Run the server:
 ```bash
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --port 8001
 ```
 
 ## API Documentation
