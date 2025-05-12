@@ -59,7 +59,7 @@ def read_root():
     return Response(status_code=302, headers={"Location": "/docs"})
 
 
-@app.head("/health", include_in_schema=False)
+@app.head("/", include_in_schema=False)
 def health_check():
     return {"status": "ok"}
 
