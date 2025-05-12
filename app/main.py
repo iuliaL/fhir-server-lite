@@ -12,7 +12,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="FHIR-lite Server",
     description="A lightweight FHIR server implementation focusing on Patient and Observation resources",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # CORS middleware
@@ -24,6 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # FHIR Content-Type middleware
 @app.middleware("http")
 async def add_fhir_content_type(request: Request, call_next):
@@ -31,6 +32,7 @@ async def add_fhir_content_type(request: Request, call_next):
     if isinstance(response, JSONResponse):
         response.headers["Content-Type"] = "application/fhir+json"
     return response
+
 
 # Error handling
 @app.exception_handler(HTTPException)
@@ -44,19 +46,23 @@ async def http_exception_handler(request: Request, exc: HTTPException):
                 {
                     "severity": "error",
                     "code": "processing",
-                    "diagnostics": str(exc.detail)
+                    "diagnostics": str(exc.detail),
                 }
-            ]
-        }
+            ],
+        },
     )
+
 
 @app.get("/", include_in_schema=False)
 def read_root():
     """Redirect to API documentation"""
-    return Response(
-        status_code=302,
-        headers={"Location": "/docs"}
-    )
+    return Response(status_code=302, headers={"Location": "/docs"})
+
+
+@app.head("/health", include_in_schema=False)
+def health_check():
+    return {"status": "ok"}
+
 
 @app.get("/metadata")
 def capability_statement():
@@ -68,44 +74,47 @@ def capability_statement():
         "kind": "instance",
         "fhirVersion": "4.0.1",
         "format": ["json"],
-        "rest": [{
-            "mode": "server",
-            "resource": [
-                {
-                    "type": "Patient",
-                    "interaction": [
-                        {"code": "read"},
-                        {"code": "create"},
-                        {"code": "update"},
-                        {"code": "delete"},
-                        {"code": "search-type"}
-                    ],
-                    "searchParam": [
-                        {"name": "family", "type": "string"},
-                        {"name": "given", "type": "string"},
-                        {"name": "gender", "type": "token"},
-                        {"name": "birthdate", "type": "date"}
-                    ]
-                },
-                {
-                    "type": "Observation",
-                    "interaction": [
-                        {"code": "read"},
-                        {"code": "create"},
-                        {"code": "update"},
-                        {"code": "delete"},
-                        {"code": "search-type"}
-                    ],
-                    "searchParam": [
-                        {"name": "patient", "type": "reference"},
-                        {"name": "category", "type": "token"},
-                        {"name": "code", "type": "token"},
-                        {"name": "date", "type": "date"}
-                    ]
-                }
-            ]
-        }]
+        "rest": [
+            {
+                "mode": "server",
+                "resource": [
+                    {
+                        "type": "Patient",
+                        "interaction": [
+                            {"code": "read"},
+                            {"code": "create"},
+                            {"code": "update"},
+                            {"code": "delete"},
+                            {"code": "search-type"},
+                        ],
+                        "searchParam": [
+                            {"name": "family", "type": "string"},
+                            {"name": "given", "type": "string"},
+                            {"name": "gender", "type": "token"},
+                            {"name": "birthdate", "type": "date"},
+                        ],
+                    },
+                    {
+                        "type": "Observation",
+                        "interaction": [
+                            {"code": "read"},
+                            {"code": "create"},
+                            {"code": "update"},
+                            {"code": "delete"},
+                            {"code": "search-type"},
+                        ],
+                        "searchParam": [
+                            {"name": "patient", "type": "reference"},
+                            {"name": "category", "type": "token"},
+                            {"name": "code", "type": "token"},
+                            {"name": "date", "type": "date"},
+                        ],
+                    },
+                ],
+            }
+        ],
     }
+
 
 # Include FHIR routers
 app.include_router(patients_router, prefix="/Patient", tags=["Patient"])
