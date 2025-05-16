@@ -112,25 +112,33 @@ class Patient(FHIRBaseModel):
 
         # Handle name if present
         if "name" in fhir_dict:
-            self.name = fhir_dict["name"]
+            self.name = fhir_dict["name"] or None
 
         # Handle telecom if present
         if "telecom" in fhir_dict:
-            self.telecom = [
+            telecom = [
                 {
                     "system": t.get("system"),
                     "value": t.get("value"),
                     **({"use": t["use"]} if "use" in t else {}),
                 }
-                for t in fhir_dict["telecom"]
-                if t.get("system")
-                and t.get("value")  # Only include entries with required fields
+                for t in fhir_dict.get("telecom", [])
+                if t.get("system") and t.get("value")
             ]
+        self.telecom = telecom or None
 
         # Handle other attributes
-        self.active = str(fhir_dict.get("active", True)).lower()
-        self.gender = fhir_dict.get("gender")
-        self.birth_date = fhir_dict.get("birthDate")
-        self.address = fhir_dict.get("address")
+        if "active" in fhir_dict:
+            self.active = str(fhir_dict.get("active", True)).lower()
+
+        if "gender" in fhir_dict:
+            self.gender = fhir_dict.get("gender")
+
+        if "birthDate" in fhir_dict:
+            self.birth_date = fhir_dict.get("birthDate")
+
+        if "address" in fhir_dict:
+            raw_address = fhir_dict["address"]
+            self.address = None if raw_address in [None, "null"] else raw_address
 
         return self
