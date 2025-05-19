@@ -3,6 +3,13 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.db import get_db
 from app.models.patient import Patient, ContactSystem, ContactUse
+from app.utils.db import (
+    safe_db_operation,
+    save_and_refresh,
+    safe_add,
+    safe_commit,
+    safe_refresh,
+)
 from pydantic import BaseModel, EmailStr, constr
 from datetime import date
 from enum import Enum
@@ -93,9 +100,17 @@ def create_patient(
 
         patient = Patient()
         patient.from_fhir(fhir_resource)
-        db.add(patient)
-        db.commit()
-        db.refresh(patient)
+        print("→ About to add patient")
+        safe_add(db, patient)
+        print("✓ Patient added")
+
+        print("→ About to commit")
+        safe_commit(db)
+        print("✓ Commit done")
+
+        print("→ About to refresh")
+        safe_refresh(db, patient)
+        print("✓ Refresh done")
 
         # Set Location header
         response.headers["Location"] = f"/Patient/{patient.id}"
@@ -166,8 +181,8 @@ def update_patient(patient_id: str, fhir_resource: dict, db: Session = Depends(g
 
     try:
         patient.from_fhir(fhir_resource)
-        db.commit()
-        db.refresh(patient)
+        safe_db_operation(db, operation="commit")
+        safe_db_operation(db, patient, "refresh")
         return patient.to_fhir()
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -183,6 +198,6 @@ def delete_patient(patient_id: str, db: Session = Depends(get_db)):
         # Return 204 even if not found, as per FHIR spec
         return Response(status_code=204)
 
-    db.delete(patient)  # This will cascade delete observations
-    db.commit()
+    safe_db_operation(db, patient, "delete")
+    safe_db_operation(db, operation="commit")
     return Response(status_code=204)
