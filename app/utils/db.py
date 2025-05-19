@@ -47,21 +47,6 @@ def safe_delete(db: Session, obj: Any) -> None:
     db.delete(obj)
 
 
-@with_db_retry
-def save_and_refresh(db: Session, obj: Any) -> None:
-    """
-    Helper function to add an object to the database, commit the transaction,
-    and refresh the object, all with retry logic.
-
-    Args:
-        db: The database session
-        obj: The object to save and refresh
-    """
-    db.add(obj)
-    db.commit()
-    db.refresh(obj)
-
-
 def safe_db_operation(db: Session, obj: Any = None, operation: str = None) -> None:
     """
     Perform a database operation safely with retries.

@@ -5,7 +5,6 @@ from app.db import get_db
 from app.models.patient import Patient, ContactSystem, ContactUse
 from app.utils.db import (
     safe_db_operation,
-    save_and_refresh,
     safe_add,
     safe_commit,
     safe_refresh,

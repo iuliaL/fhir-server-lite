@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.db import get_db
 from app.models.observation import Observation
-from app.utils.db import safe_db_operation, save_and_refresh
+from app.utils.db import safe_db_operation, safe_add, safe_commit, safe_refresh
 from datetime import datetime
 
 router = APIRouter()
@@ -17,7 +17,17 @@ def create_observation(
     try:
         observation = Observation()
         observation.from_fhir(fhir_resource)
-        save_and_refresh(db, observation)
+        print("→ About to add observation")
+        safe_add(db, observation)
+        print("✓ Observation added")
+
+        print("→ About to commit")
+        safe_commit(db)
+        print("✓ Commit done")
+
+        print("→ About to refresh")
+        safe_refresh(db, observation)
+        print("✓ Refresh done")
 
         # Set Location header
         response.headers["Location"] = f"/Observation/{observation.id}"
